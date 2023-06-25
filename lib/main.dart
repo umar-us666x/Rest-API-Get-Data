@@ -15,18 +15,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String body = "No Data";
+  List data = [];
 
-  void getData() async {
+  Future getData() async {
+    await Future.delayed(Duration(seconds: 3));
     var myResponse = await http.get(
-      Uri.parse("https://jsonplaceholder.typicode.com/users/3"),
+      Uri.parse("https://jsonplaceholder.typicode.com/users"),
     );
 
-    Map<String, dynamic> data = jsonDecode(myResponse.body);
-
-    setState(() {
-      body = data.toString();
-    });
+    var dataRespon = jsonDecode(myResponse.body) as List;
+    if (myResponse.statusCode == 200) {
+      data = dataRespon;
+    } else {
+      print("Error");
+    }
   }
 
   @override
@@ -34,15 +36,34 @@ class _HomePageState extends State<HomePage> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: getData,
-          child: Icon(Icons.get_app),
-        ),
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: getData,
+        //   child: Icon(Icons.get_app),
+        // ),
         appBar: AppBar(
-          title: Text("GET DATA USE REST API"),
+          title: Text("GET DATA - REST API"),
         ),
-        body: Center(
-          child: Text(body),
+        body: FutureBuilder(
+          future: getData(),
+          builder: (context, snapshoot) {
+            if (snapshoot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else {
+              return ListView.builder(
+                itemCount: data.length,
+                itemBuilder: (context, index) {
+                  final dataUser = data[index];
+                  return ListTile(
+                    title: Text(
+                      dataUser['name'],
+                    ),
+                    leading: CircleAvatar(backgroundColor: Colors.grey),
+                    subtitle: Text(dataUser['email']),
+                  );
+                },
+              );
+            }
+          },
         ),
       ),
     );
